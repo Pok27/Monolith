@@ -190,9 +190,9 @@
           source: Body
           reagent: Bicaridine
           min: 0.0
-          max: 0.7
+          max: 0.5
         syndrome: PainSyndrome
-        duration: 10
+        duration: 60
       - !type:GenericDescEffect
         description: forge-reagent-effect-wiithdrawl-smallpain
       - !type:ToleranceEffect
@@ -206,7 +206,7 @@
         - !type:ToleranceCondition
           source: Body
           reagent: Bicaridine
-          min: 0.6
+          min: 0.7
           max: 1.0
         damage:
           Brute: 0.5
@@ -988,13 +988,18 @@
           Brute: -0.25
           Burn: -0.25
           Toxin: -0.12
-      - !type:AdjustReagent # Mono: Overdose, penalize metabolism
-        conditions:
-        - !type:ReagentThreshold
-          min: 15
-        reagent: Tricordrazine
-        amount: -0.8
+      # Forge-change: we have another penalize
+      # - !type:AdjustReagent # Mono: Overdose, penalize metabolism
+      #   conditions:
+      #   - !type:ReagentThreshold
+      #     min: 15
+      #   reagent: Tricordrazine
+      #   amount: -0.8
       # Forge-change-start
+      - !type:SuppressEffect
+        # hidden: true
+        syndrome: SedativeAddiction
+        duration: 90
       - !type:ToleranceEffect
         # hidden: true
         reagent: Tricordrazine
@@ -1042,6 +1047,7 @@
   physicalDesc: reagent-physical-desc-soothing
   flavor: medicine
   color: "#fcf7f9"
+  decayRate: 0.06 # Forge-change
   metabolisms:
     Medicine:
       effects:
@@ -1782,11 +1788,13 @@
             min: 0.7
             max: 1.0
         syndrome: SedativeAddiction
-        severity: 0.95
+        severity: 0.25
       - !type:SuppressEffect
-        hidden: true
         syndrome: StimulantAddiction
-        duration: 55
+        duration: 180
+      - !type:RemoveSyndromeEffect
+        syndrome: StimulantAddiction
+        severity: 0.3
       - !type:GenericDescEffect
         description: forge-reagent-tolerance-addiction
         # Forge-change-end

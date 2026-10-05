@@ -1,12 +1,15 @@
 using System.Linq;
 using System.Numerics;
 using Content.Server._Forge.Sponsor; // Forge-Change
+using Content.Shared._Forge.Sponsor; // Forge-Change
 using Content.Server.Administration.Logs;
 using Content.Server.Administration.Managers; // Frontier
 using Content.Server.Cargo.Systems; // Frontier
 using Content.Server.Chat.Managers;
 using Content.Server.GameTicking;
 using Content.Server.Ghost.Components;
+using Content.Server.Ghost.Roles;
+using Content.Server.Ghost.Roles.Components;
 using Content.Server.Mind;
 using Content.Server.Roles.Jobs;
 using Content.Server.Warps;
@@ -78,6 +81,7 @@ namespace Content.Server.Ghost
         [Dependency] private GhostSpriteStateSystem _ghostState = default!;
         [Dependency] private SponsorManager _sponsors = default!; // Forge-Change
         [Dependency] private PlayerRateLimitManager _rateLimit = default!; // Forge-Change
+        [Dependency] private GhostRoleSystem _ghostRoles = default!; // Forge-Change
 
         private const string InvalidGhostRequestRateLimitKey = "GhostInvalidRequests"; // Forge-Change
 
@@ -85,6 +89,7 @@ namespace Content.Server.Ghost
         private EntityQuery<PhysicsComponent> _physicsQuery;
 
         private static readonly ProtoId<TagPrototype> AllowGhostShownByEventTag = "AllowGhostShownByEvent";
+        private static readonly ProtoId<TagPrototype> StationAiTag = "StationAi"; // Forge-Change
 
         public override void Initialize()
         {
@@ -599,10 +604,17 @@ namespace Content.Server.Ghost
             var user = mind.Comp.UserId;
             try
             {
-                if (user != null && _sponsors.TryGetSponsor(user.Value, out var level)
-                                 && _sponsors.TryGetSponsorGhost(level, out var sponsorGhost))
+                if (user != null && _sponsors.TryGetSponsor(user.Value, out var level))
                 {
-                    ghost = Spawn(sponsorGhost, spawnPosition.Value);
+                    // Forge-Change: prefer the sponsor's explicitly chosen ghost skin (validated against their level),
+                    // then fall back to the default skin tied to their level, then to the normal observer.
+                    var chosenSkin = _preferencesManager.GetPreferencesOrNull(user.Value)?.SponsorGhostSkin;
+                    if (!string.IsNullOrEmpty(chosenSkin) && SponsorData.IsGhostSkinAllowed(level, chosenSkin))
+                        ghost = Spawn(chosenSkin, spawnPosition.Value);
+                    else if (_sponsors.TryGetSponsorGhost(level, out var sponsorGhost))
+                        ghost = Spawn(sponsorGhost, spawnPosition.Value);
+                    else
+                        ghost = SpawnAtPosition(GameTicker.ObserverPrototypeName, spawnPosition.Value);
                 }
                 else
                 {
@@ -673,11 +685,22 @@ namespace Content.Server.Ghost
             if (!_admin.IsAdmin(session))
                 return;
 
+            // Never tint custom ghost skins (e.g. sponsor skins) — keep their original sprite colors.
+            // Only the default observer prototypes may be recolored.
+            if (TryComp<MetaDataComponent>(ghostEntity, out var meta)
+                && meta.EntityPrototype != null
+                && meta.EntityPrototype.ID != GameTicker.ObserverPrototypeName
+                && meta.EntityPrototype.ID != GameTicker.AdminObserverPrototypeName)
+                return;
+
             if (!_preferencesManager.TryGetCachedPreferences(session.UserId, out var prefs))
                 return;
 
-            // Only apply the color if it's not transparent (the default)
-            if (prefs.AdminOOCColor == Color.Transparent)
+            // Only tint the ghost sprite when the admin explicitly chose a color.
+            // Transparent is the "unset" sentinel; Red is the legacy DB default that every admin
+            // who never ran setadminooc still has, which would otherwise turn every admin ghost red.
+            // Both are treated as "no custom color" so the original sprite color is preserved.
+            if (prefs.AdminOOCColor == Color.Transparent || prefs.AdminOOCColor == Color.Red)
                 return;
 
             // Make the color slightly transparent for ghosts
@@ -758,6 +781,17 @@ namespace Content.Server.Ghost
             //   (If the mob survives, that's a bug. Ghosting is kept regardless.)
             var canReturn = canReturnGlobal && _mind.IsCharacterDeadPhysically(mind);
 
+            // Forge-Change: an AI brain has no MobState and is otherwise treated as dead.
+            // Ghosting from an occupied core must remove its mind so the takeover role can reopen.
+            GhostRoleComponent? stationAiRole = null;
+            var stationAiBrain = playerEntity != null &&
+                                 _tag.HasTag(playerEntity.Value, StationAiTag) &&
+                                 TryComp(playerEntity.Value, out stationAiRole)
+                ? playerEntity
+                : null;
+            if (stationAiBrain != null)
+                canReturn = false;
+
             if (_configurationManager.GetCVar(CCVars.GhostKillCrit) &&
                 canReturnGlobal &&
                 TryComp(playerEntity, out MobStateComponent? mobState))
@@ -791,6 +825,13 @@ namespace Content.Server.Ghost
 
             if (ghost == null)
                 return false;
+
+            // Forge-Change: the takeover MindRemovedMessage is unreliable for station AI brains on this fork.
+            if (stationAiBrain is { } brain && stationAiRole?.ReregisterOnGhost == true)
+            {
+                EnsureComp<GhostTakeoverAvailableComponent>(brain);
+                _ghostRoles.ReregisterGhostRole((brain, stationAiRole));
+            }
 
             return true;
         }

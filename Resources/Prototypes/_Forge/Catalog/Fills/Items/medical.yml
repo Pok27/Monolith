@@ -4,10 +4,10 @@
   suffix: Filled
   components:
   - type: Sprite
-    sprite: Forge/Objects/Specific/Medical/firstaidkits.rsi
+    sprite: _Forge/Objects/Specific/Medical/firstaidkits.rsi
     state: antiaddict
   - type: Item
-    sprite: Forge/Objects/Specific/Medical/firstaidkits.rsi
+    sprite: _Forge/Objects/Specific/Medical/firstaidkits.rsi
     heldPrefix: antiaddict
   - type: StorageFill
     contents:
@@ -80,6 +80,39 @@
         maxVol: 20
         reagents:
         - ReagentId: Clonidine
+          Quantity: 9
+
+- type: entity
+  name: pill canister
+  parent: PillCanister
+  id: PillCanisterCodeine
+  suffix: Codeine 9u, 5
+  components:
+  - type: Label
+    currentLabel: reagent-name-codeine
+  - type: StorageFill
+    contents:
+    - id: PillCodeine
+      amount: 5
+
+- type: entity
+  name: pill
+  suffix: Codeine 9u
+  parent: Pill
+  id: PillCodeine
+  components:
+  - type: Pill
+    pillType: 11
+  - type: Sprite
+    state: pill11
+  - type: Label
+    currentLabel: reagent-name-codeine
+  - type: SolutionContainerManager
+    solutions:
+      food:
+        maxVol: 20
+        reagents:
+        - ReagentId: Codeine
           Quantity: 9
 
 - type: entity

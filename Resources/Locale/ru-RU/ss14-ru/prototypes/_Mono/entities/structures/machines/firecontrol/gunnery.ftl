@@ -1,31 +1,21 @@
-# Серверы и консоли управления орудиями (спавн / строительство)
-ent-GunneryServerBase = сервер управления орудиями
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-GunneryServerLow = маломощный сервер управления орудиями
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-GunneryServerMedium = сервер управления орудиями средней мощности
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-GunneryServerHigh = мощный сервер управления орудиями
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-GunneryServerUltra = сверхмощный сервер управления орудиями
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-GunneryServerOmega = омега-сервер управления орудиями
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-GunneryServerStation = станционный сервер управления орудиями
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-GunneryServerStationConsolesEnforced = станционный сервер управления орудиями
-    .suffix = жёсткий лимит консолей
-    .desc = Обеспечивает дистанционное управление корабельным оружием.
-
-ent-ComputerGunneryConsole = консоль управления орудиями
-    .desc = Связывается с сервером управления орудиями для управления корабельным оружием.
-
-ent-ComputerTabletopGunneryConsole = настольная консоль управления орудиями
-    .desc = Связывается с сервером управления орудиями для управления корабельным оружием.
+ent-GunneryServerBase = сервер управления вооружением
+    .desc = Позволяет удаленно управлять орудиями шаттла
+ent-GunneryServerLow = { ent-GunneryServerBase } малой мощности
+    .desc = { ent-GunneryServerBase.desc }
+ent-GunneryServerMedium = { ent-GunneryServerBase } средней мощности
+    .desc = { ent-GunneryServerBase.desc }
+ent-GunneryServerHigh = { ent-GunneryServerBase } высокой мощности
+    .desc = { ent-GunneryServerBase.desc }
+ent-GunneryServerUltra = { ent-GunneryServerBase } "Ультра"
+    .desc = { ent-GunneryServerBase.desc }
+ent-GunneryServerOmega = { ent-GunneryServerBase } "Омега"
+    .desc = { ent-GunneryServerBase.desc }
+ent-GunneryServerStation = станционный { ent-GunneryServerBase }
+    .desc = { ent-GunneryServerBase.desc }
+ent-GunneryServerStationConsolesEnforced = станционный { ent-GunneryServerBase }
+    .suffix = Укрепленный, Ограничение по консолям
+    .desc = { ent-GunneryServerBase.desc }
+ent-ComputerGunneryConsole = консоль управления вооружением
+    .desc = Взаимодействует с сервером управления вооружением для управления орудиями шаттла.
+ent-ComputerTabletopGunneryConsole = { ent-ComputerGunneryConsole }
+    .desc = { ent-ComputerGunneryConsole.desc }
